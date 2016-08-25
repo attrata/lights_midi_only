@@ -75,8 +75,8 @@ void setup()
   myBus.sendControllerChange(0, 0, 90); // Send a controllerChange
 
   String pattern_string = "";
-  for (int x=0; x < 7; x++){
-    for (int y=0; y < 7; y++){
+  for (int x=0; x < 8; x++){
+    for (int y=0; y < 8; y++){
       pattern_string += pattern[x][y] + ",";
     }
   }
@@ -84,17 +84,7 @@ void setup()
   redis = new Redis(this, "127.0.0.1", 6379);
   redis.setnx("pattern",pattern_string);
   
-  pattern_string = redis.get("pattern");
-  int[] nums = int(split(pattern_string, ','));
-
-  pattern[0] = subset(nums, 0,7);
-  pattern[1] = subset(nums, 8,15);
-
-  for (int x=0; x < 7; x++){
-    for (int y=0; y < 7; y++){
-      pattern[x][y] = nums[x+(y*8)];
-    }
-  }
+  readPattern();
   
   // Init timekeeping, start the pattern from the beginning
   startPattern();
@@ -148,6 +138,7 @@ void mousePressed()
   if (gx >= 0 && gx < pattern[0].length && gy >= 0 && gy < pattern.length) {
     pattern[gy][gx] ^= 1;
   }
+  writePattern();
 }
 
 void keyPressed()
@@ -194,5 +185,33 @@ void noteOn(int channel, int pitch, int velocity) {
    else if (pattern[pitch / 16][pitch % 16] == 1){
     pattern[pitch / 16][pitch % 16] = 0;
     myBus.sendNoteOn(channel, pitch, 0);     
+  }
+
+  writePattern();
+}
+
+void writePattern(){
+  String pattern_string = "";
+  for (int x=0; x < 8; x++){
+    for (int y=0; y < 8; y++){
+      pattern_string += pattern[x][y] + ",";
+    }
+  }
+  redis.set("pattern",pattern_string);
+}
+
+void readPattern(){
+  String pattern_string = redis.get("pattern");
+  println(pattern_string);
+  int[] nums = int(split(pattern_string, ','));
+
+  for (int x=0; x < 8; x++){
+    for (int y=0; y < 8; y++){
+      if (x+(y*8) > nums.length - 1){
+        pattern[x][y] = 0;
+      }else {
+        pattern[x][y] = nums[x+(y*8)];
+      }
+    }
   }
 }
