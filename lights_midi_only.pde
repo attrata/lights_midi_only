@@ -208,9 +208,9 @@ void readPattern(){
   for (int x=0; x < 8; x++){
     for (int y=0; y < 8; y++){
       if (x+(y*8) > nums.length - 1){
-        pattern[x][y] = 0;
+        pattern[y][x] = 0;
       }else {
-        pattern[x][y] = nums[x+(y*8)];
+        pattern[y][x] = nums[x+(y*8)];
       }
     }
   }
